@@ -1,6 +1,6 @@
 CC = gcc
 OBJS = serverEpoll.c clientEpoll.c
-CFLAG = -std=c99
+CFLAG = -std=c99 -g
 
 all: c s
 

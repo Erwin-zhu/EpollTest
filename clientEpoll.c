@@ -31,11 +31,12 @@ int connectToServer(char* ip, int port);
 
 int main(int argc, char* argv[])
 {
-    char ip[20] = "192.168.4.111";
+    char ip[20] = "192.168.1.111";
     int sfd_client;
     sfd_client = connectToServer(ip, SERVER_PORT);
 #if _EPOLL_TRACE_
     printf("sfd_client = %d.\n", sfd_client);
+    perror("connectToServer");
 #endif
 
     while(sfd_client > 0)

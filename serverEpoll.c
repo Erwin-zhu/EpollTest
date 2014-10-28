@@ -24,6 +24,7 @@
 
 int initServer(int type, const struct sockaddr *addr, socklen_t alen, int qlen);    //初始化服务器
 int make_socket_non_blocking(int sfd); //设置套接字为非阻塞
+void setnonblocking(int* sockfd);
 
 int main(int argc, char* argv[])
 {
@@ -47,15 +48,17 @@ int main(int argc, char* argv[])
         perror("epoll_create() failed:");
     }
 
-    int sfdNoBlock = make_socket_non_blocking(sfd);
 
     //接受客户端连接
     int len = sizeof(struct sockaddr_in);
-    if((confd = accept(sfdNoBlock, (struct sockaddr*)&clientAddr, &len)) < 0)
+    if((confd = accept(sfd, (struct sockaddr*)&clientAddr, &len)) < 0)
     {
         printf("confd = %d\n", confd);
         //goto m_errOut;
     }
+    
+    setnonblocking(&confd);
+
     struct epoll_event ev;
     ev.events = EPOLLIN;        //套接字可读
     ev.data.fd = confd;
@@ -66,12 +69,13 @@ int main(int argc, char* argv[])
 
     printf("welcome %s !\n", inet_ntoa(clientAddr.sin_addr));
 
-    int numOpenFds = EPOLL_SIZE - 1;
     int ready;
     struct epoll_event evList[MAX_EVENTS];
+    char outputBuf[OUTPUTBUFFER_SIZE] = "";
+
+    int numOpenFds = EPOLL_SIZE - 1;
     while(numOpenFds > 0)
     {
-        char outputBuf[OUTPUTBUFFER_SIZE] = "";
         ready = epoll_wait(epfd, evList, MAX_EVENTS, 0);
         if(ready == -1)
         {
@@ -89,9 +93,10 @@ int main(int argc, char* argv[])
                 {
                     goto m_errOut;
                 }
-                printf("%s said:: %s", inet_ntoa(clientAddr.sin_addr), outputBuf);
+                printf("%s said:: %s\n", inet_ntoa(clientAddr.sin_addr), outputBuf);
             }
         }
+        ready = 0;//防止进入死循环，移植打印said ***
     }
 
     close(sfd);
@@ -163,4 +168,17 @@ int make_socket_non_blocking (int sfd)
     }
  
   return 0;
+}
+
+//设置套接字为非阻塞
+void setnonblocking(int* sockfd)
+{
+    int flag;
+
+    flag = fcntl(*sockfd, F_GETFL);
+    if(flag < 0)
+        printf("fcnt(F_GETFL) error!");
+    flag |= O_NONBLOCK;
+    if(fcntl(*sockfd, F_SETFL, flag) < 0)
+        printf("fcnt(F_SETFL) error!");
 }
