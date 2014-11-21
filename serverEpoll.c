@@ -23,8 +23,8 @@
 
 
 int initServer(int type, const struct sockaddr *addr, socklen_t alen, int qlen);    //初始化服务器
-int make_socket_non_blocking(int sfd); //设置套接字为非阻塞
-void setnonblocking(int* sockfd);
+ void setnonblocking(int* sockfd);//设置套接字为非阻塞
+
 
 int main(int argc, char* argv[])
 {
@@ -146,28 +146,6 @@ errout:
     printf("initServer failed: %s", strerror(errno));
     close(sfd);
     return -1;
-}
-
-int make_socket_non_blocking (int sfd)
-{
-  int flags, s;
- 
-  flags = fcntl (sfd, F_GETFL, 0);
-  if (flags == -1)
-    {
-      perror ("fcntl");
-      return -1;
-    }
- 
-  flags |= O_NONBLOCK;
-  s = fcntl (sfd, F_SETFL, flags);
-  if (s == -1)
-    {
-      perror ("fcntl");
-      return -1;
-    }
- 
-  return 0;
 }
 
 //设置套接字为非阻塞
